@@ -161,64 +161,47 @@ def handle_postback(event):
 
         ## 生存予測
         allowSelfSignedHttps(True) # this line is needed if you use self-signed certificate in your scoring service.
-
         # Request data goes here
+        # data = {
+        #     "input_data": {
+        #         "columns": ["Pclass", "Sex", "Age", "SibSp", "Parch", "Embarked"],
+        #         "index": [0],
+        #         "data": [["2", "female", "35", "1", "2", "Q"]]
+        #     }
+        # }
         data = {
-            "data":
-            [
-                {
-                        'PassengerId': "0",
-                        'Survived': "0",
-                        'Pclass': pclass,
-                        'Name': "example_value",
-                        'Sex': sex,
-                        'Age': age,
-                        'SibSp': sibsp,
-                        'Parch': parch,
-                        'Ticket': "example_value",
-                        'Fare': "0",
-                        'Cabin': "example_value",
-                        'Embarked': embarked,
-                },
-            ],
+            "input_data": {
+                "columns": ["Pclass", "Sex", "Age", "SibSp", "Parch", "Embarked"],
+                "index": [0],
+                "data": [[pclass, sex, age, sibsp, parch, embarked]]
+            }
         }
 
         body = str.encode(json.dumps(data))
 
-        url = 'http://9f9f1553-059a-49a5-9d7d-9e86d4b8305e.japaneast.azurecontainer.io/score'
-        api_key = '' # Replace this with the API key for the web service
-        headers = {'Content-Type':'application/json', 'Authorization':('Bearer '+ api_key)}
+        url = 'https://titanic-aml-endpoint.japaneast.inference.ml.azure.com/score'
+        api_key = os.getenv('API_KEY', None) # Replace this with the API key for the web service
+
+        # The azureml-model-deployment header will force the request to go to a specific deployment.
+        # Remove this header to have the request observe the endpoint traffic rules
+        headers = {'Content-Type':'application/json', 'Authorization':('Bearer '+ api_key), 'azureml-model-deployment': 'default' }
 
         req = urllib.request.Request(url, body, headers)
 
-        result = ''
-        json_result = {}
-        j_dict = {}
         try:
-            logging.info('try in2')
             response = urllib.request.urlopen(req)
 
-            result = response.read().decode("utf8", 'ignore')
-            json_result = json.loads(result)
-            logging.info(type(result))
-            #json_result = json.load(result)
-            logging.info(type(json_result))
-            logging.info(str(json_result))
-
-            j_dict = ast.literal_eval(json_result)
-            logging.info(type(j_dict['result']))
-            logging.info(str(j_dict['result']))
+            result = response.read()
+            logging.info(result)
         except urllib.error.HTTPError as error:
-            logging.info('except in')
             logging.info("The request failed with status code: " + str(error.code))
 
-            result = 'Error'
             # Print the headers - they include the requert ID and the timestamp, which are useful for debugging the failure
             logging.info(error.info())
-            logging.info(json.loads(error.read().decode("utf8", 'ignore')))
+            logging.info(error.read().decode("utf8", 'ignore'))
 
         ## メッセージ送信   
-        if j_dict['result'][0] == 1:
+        if result == b'[1]':
             line_bot_api.reply_message(
                 event.reply_token,
                 [TextSendMessage(

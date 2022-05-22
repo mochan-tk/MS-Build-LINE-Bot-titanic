@@ -16,7 +16,7 @@ az login --use-device-code
 
 az account set --subscription <your subscription id>
 
-group_name=20211027HappyHackLineBot
+group_name=20220525MSBuild
 
 az group create --name ${group_name} --location japaneast
 
@@ -26,7 +26,8 @@ az configure --defaults group=${group_name}
 az deployment group create --name deployPrj01 --template-file main.bicep \
   --parameters ramdom=<ramdom> \
   --parameters secret=<secret> \
-  --parameters access=<access>
+  --parameters access=<access> \
+  --parameters apikey=<apikey>
   
 az deployment group show \
   -g ${group_name} \

@@ -3,6 +3,7 @@ param location string = resourceGroup().location
 param ramdom string
 param secret string
 param access string
+param apikey string
 
 var functionAppName = 'fn-${toLower(ramdom)}'
 var appServicePlanName = 'FunctionPlan'
@@ -162,6 +163,10 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         {
           name: 'CHANNEL_ACCESS_TOKEN'
           value: access
+        }
+        {
+          name: 'API_KEY'
+          value: apikey
         }
         {
           name: 'STORAGE_CONNECTION_STRING'
